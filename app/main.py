@@ -8,8 +8,11 @@ app = FastAPI(title="LexHub API", version="1.0.0")
 
 # ── 2. CORS — ROBUST CONFIGURATION ──────────────────────────
 # We use environment variables for allowed origins, falling back to locals
-allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,https://lexhub-frontdemo.vercel.app")
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,https://lexhub-frontdemo.vercel.app,https://lexhub-backend.onrender.com")
 origins = [o.strip() for o in allowed_origins_raw.split(",") if o.strip()]
+# Explicitly ensuring localhost:3000 is always allowed as per request
+if "http://localhost:3000" not in origins:
+    origins.append("http://localhost:3000")
 
 app.add_middleware(
     CORSMiddleware,
