@@ -51,7 +51,7 @@ def create_case(case: CaseCreate, current_user: User = Depends(get_current_user)
 
 @router.get("/me", response_model=List[CaseResponse])
 def get_my_cases(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user.user_type == "lawyer":
+    if current_user.user_type in ["lawyer", "admin"]:
         lawyer_profile = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()
         if not lawyer_profile:
             return []

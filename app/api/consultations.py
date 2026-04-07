@@ -51,7 +51,7 @@ def create_consultation(consultation: ConsultationCreate, current_user: User = D
 def get_my_consultations(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if current_user.user_type == "user":
         return db.query(Consultation).filter(Consultation.user_id == current_user.id).all()
-    elif current_user.user_type == "lawyer":
+    elif current_user.user_type in ["lawyer", "admin"]:
         lawyer_profile = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()
         if not lawyer_profile:
             return []

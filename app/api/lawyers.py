@@ -35,7 +35,7 @@ async def create_publication(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.user_type != "lawyer":
+    if current_user.user_type not in ["lawyer", "admin"]:
         raise HTTPException(status_code=403, detail="Only lawyers can add publications")
     
     lawyer = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()
@@ -75,7 +75,7 @@ def delete_publication(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.user_type != "lawyer":
+    if current_user.user_type not in ["lawyer", "admin"]:
         raise HTTPException(status_code=403, detail="Only lawyers can delete publications")
         
     lawyer = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()

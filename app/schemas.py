@@ -37,6 +37,10 @@ class UserBase(BaseModel):
     linkedin_url: Optional[str] = None
     phone: Optional[str] = None
 
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 class UserCreate(UserBase):
     password: str
     # Lawyer specific optional fields during registration

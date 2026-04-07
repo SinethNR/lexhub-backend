@@ -16,7 +16,7 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 @router.get("/summary")
 def get_report_summary(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     # Basic summary counts
-    if current_user.user_type == "lawyer":
+    if current_user.user_type in ["lawyer", "admin"]:
         lawyer_profile = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()
         if not lawyer_profile:
             return {"total": 0, "confirmed": 0, "completed": 0, "total_earned": 0}
@@ -100,7 +100,7 @@ def export_report_csv(
         threshold = now - timedelta(days=365)
     
     # Fetch data
-    if current_user.user_type == "lawyer":
+    if current_user.user_type in ["lawyer", "admin"]:
         lawyer_profile = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()
         consultations = db.query(Consultation).filter(
             Consultation.lawyer_id == lawyer_profile.id,
@@ -120,7 +120,7 @@ def export_report_csv(
     writer.writeheader()
     
     for c in consultations:
-        if current_user.user_type == "lawyer":
+        if current_user.user_type in ["lawyer", "admin"]:
             row = {
                 "Date": c.consultation_date.strftime("%Y-%m-%d"),
                 "Client Name": c.user.name,

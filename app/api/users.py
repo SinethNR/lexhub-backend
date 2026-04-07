@@ -7,8 +7,8 @@ from typing import List, Optional
 
 from ..database import get_db
 from ..models import User, Lawyer
-from ..schemas import UserProfileResponse, UserBase
-from ..core.security import get_current_user
+from ..schemas import UserProfileResponse, UserBase, PasswordChangeRequest
+from ..core.security import get_current_user, verify_password, get_password_hash
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -85,7 +85,7 @@ def update_profile(user_id: int, profile_update: dict, current_user: User = Depe
         user.phone = profile_update["phone"]
     
     lawyer_details = profile_update.get("lawyer_details", None)
-    if user.user_type == "lawyer" and lawyer_details:
+    if user.user_type in ["lawyer", "admin"] and lawyer_details:
         lawyer = db.query(Lawyer).filter(Lawyer.user_id == user.id).first()
         if lawyer:
             lawyer.phone = lawyer_details.get("phone", lawyer.phone)
@@ -102,6 +102,15 @@ def update_profile(user_id: int, profile_update: dict, current_user: User = Depe
             
     db.commit()
     return {"message": "Profile updated successfully"}
+
+@router.put("/change-password")
+def change_password(request: PasswordChangeRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not verify_password(request.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    current_user.hashed_password = get_password_hash(request.new_password)
+    db.commit()
+    return {"message": "Password changed successfully"}
 
 @router.get("/demo/profiles")
 def get_demo_profiles():
