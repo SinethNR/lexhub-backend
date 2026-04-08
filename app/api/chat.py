@@ -27,6 +27,7 @@ class ChatRequest(BaseModel):
 
 import logging
 import re
+import threading
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,54 +36,63 @@ logger = logging.getLogger(__name__)
 # Cache for statutory knowledge
 class KnowledgeManager:
     def __init__(self):
-        self.documents = [] # List of {title, sections: [{title, content}]}
+        self.documents = [] 
         self.is_indexed = False
+        self._lock = threading.Lock()
 
     def refresh(self):
-        """Re-index all PDFs in the statutes directory."""
-        logger.info("Refreshing AI Knowledge Base...")
-        possible_paths = [
-            os.path.join(os.getcwd(), "app", "static", "statutes"),
-            r"E:\Software Projects Sineth\WSO2 Ballerina 2025 Competition\lexhub-frontend\public\assets\statutes"
-        ]
-        
-        statutes_dir = next((p for p in possible_paths if os.path.exists(p)), None)
-        if not statutes_dir:
-            logger.warning("Statutes directory not found.")
-            return
+        """Re-index all PDFs in background."""
+        thread = threading.Thread(target=self._perform_refresh)
+        thread.daemon = True
+        thread.start()
+        logger.info("Knowledge refresh started in background thread.")
 
-        new_documents = []
-        try:
-            pdf_files = [f for f in os.listdir(statutes_dir) if f.lower().endswith(".pdf")]
-            for filename in pdf_files:
-                try:
-                    path = os.path.join(statutes_dir, filename)
-                    reader = PdfReader(path)
-                    doc_content = {"title": filename, "chunks": []}
-                    
-                    # Extract text and split into manageable chunks (approx 1000 characters)
-                    full_text = ""
-                    for page in reader.pages:
-                        text = page.extract_text()
-                        if text: full_text += text + "\n"
-                    
-                    # Basic chunking by paragraphs or double newlines
-                    paragraphs = re.split(r'\n\s*\n', full_text)
-                    for i, p in enumerate(paragraphs):
-                        if len(p.strip()) > 50:
-                            doc_content["chunks"].append({
-                                "id": i,
-                                "text": p.strip()[:2000] # Limit chunk size
-                            })
-                    new_documents.append(doc_content)
-                except Exception as e:
-                    logger.error(f"Error indexing {filename}: {e}")
-            
-            self.documents = new_documents
-            self.is_indexed = True
-            logger.info(f"AI Knowledge Base updated with {len(new_documents)} documents.")
-        except Exception as e:
-            logger.error(f"Knowledge refresh error: {e}")
+    def _perform_refresh(self):
+        with self._lock:
+            try:
+                logger.info("Starting background indexing of statutes...")
+                possible_paths = [
+                    os.path.join(os.getcwd(), "app", "static", "statutes"),
+                    r"E:\Software Projects Sineth\WSO2 Ballerina 2025 Competition\lexhub-frontend\public\assets\statutes"
+                ]
+                
+                statutes_dir = next((p for p in possible_paths if os.path.exists(p)), None)
+                if not statutes_dir:
+                    logger.warning("Statutes directory not found for indexing.")
+                    return
+
+                new_documents = []
+                pdf_files = [f for f in os.listdir(statutes_dir) if f.lower().endswith(".pdf")]
+                logger.info(f"Indexing {len(pdf_files)} PDF files...")
+                
+                for filename in pdf_files:
+                    try:
+                        path = os.path.join(statutes_dir, filename)
+                        reader = PdfReader(path)
+                        doc_content = {"title": filename, "chunks": []}
+                        
+                        full_text = ""
+                        # Read first 10 pages maximum per PDF to avoid memory issues on Render Free
+                        for i in range(min(10, len(reader.pages))):
+                            text = reader.pages[i].extract_text()
+                            if text: full_text += text + "\n"
+                        
+                        paragraphs = re.split(r'\n\s*\n', full_text)
+                        for i, p in enumerate(paragraphs):
+                            if len(p.strip()) > 50:
+                                doc_content["chunks"].append({
+                                    "id": i,
+                                    "text": p.strip()[:1500] 
+                                })
+                        new_documents.append(doc_content)
+                    except Exception as e:
+                        logger.error(f"Error indexing {filename}: {e}")
+                
+                self.documents = new_documents
+                self.is_indexed = True
+                logger.info(f"AI Knowledge Base successfully updated with {len(new_documents)} documents.")
+            except Exception as e:
+                logger.error(f"Knowledge refresh error: {e}")
 
     def get_relevant_context(self, query: str, limit: int = 5):
         """Perform a keyword-based search to find relevant context for the query."""
