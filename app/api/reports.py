@@ -86,7 +86,7 @@ def get_report_summary(current_user: User = Depends(get_current_user), db: Sessi
 
 @router.get("/export")
 def export_report_csv(
-    range_type: str = Query("monthly", regex="^(weekly|monthly|yearly)$"),
+    range_type: str = Query("monthly", pattern="^(weekly|monthly|yearly)$"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
