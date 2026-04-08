@@ -42,11 +42,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 # ── 3. Health/Root routes defined BEFORE any mounts or imports─
 # These must NEVER fail regardless of DB or static issues
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {"message": "LexHub API is running", "status": "ok"}
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "healthy", "cors": "wildcard", "version": "1.0.0"}
 
