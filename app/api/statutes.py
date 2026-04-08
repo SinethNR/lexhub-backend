@@ -8,7 +8,6 @@ from ..database import get_db
 from ..models import StatuteDocument, StatuteSection, User, UserType
 from ..schemas import StatuteResponse, StatuteSectionResponse
 from ..core.security import get_current_user
-from .chat import knowledge_manager
 
 router = APIRouter(prefix="/statutes", tags=["statutes"])
 
@@ -27,6 +26,8 @@ async def upload_statute(
     # Authorization check: only lawyers and admins can upload
     if current_user.user_type not in [UserType.lawyer, UserType.admin]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only lawyers can upload statutes")
+
+    from .chat import knowledge_manager
 
     # File type check
     if not file.filename.lower().endswith(".pdf"):
@@ -121,6 +122,8 @@ def delete_statute(
     statute = db.query(StatuteDocument).filter(StatuteDocument.id == id).first()
     if not statute:
         raise HTTPException(status_code=404, detail="Statute not found")
+
+    from .chat import knowledge_manager
     
     # Check ownership
     if statute.user_id != current_user.id:

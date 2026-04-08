@@ -96,8 +96,10 @@ class KnowledgeManager:
 
     def get_relevant_context(self, query: str, limit: int = 5):
         """Perform a keyword-based search to find relevant context for the query."""
-        if not self.is_indexed:
+        # Trigger indexing in background only if not started yet
+        if not self.is_indexed and not self.documents:
             self.refresh()
+            return "Note: Statutory knowledge base is currently being updated. General legal knowledge will be used."
             
         keywords = re.findall(r'\w+', query.lower())
         relevant_chunks = []
