@@ -219,3 +219,46 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", backref="notifications")
+
+class CaseTodo(Base):
+    __tablename__ = "case_todos"
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id", ondelete="CASCADE"))
+    task = Column(Text, nullable=False)
+    due_date = Column(Date, nullable=True)
+    status = Column(String(20), default="pending") # pending, noted, done
+    created_at = Column(DateTime, default=datetime.utcnow)
+    case = relationship("Case", backref="todos")
+
+class CaseReminder(Base):
+    __tablename__ = "case_reminders"
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id", ondelete="CASCADE"))
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=True)
+    is_urgent = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    case = relationship("Case", backref="reminders")
+
+class CasePastRecord(Base):
+    __tablename__ = "case_past_records"
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id", ondelete="CASCADE"))
+    title = Column(String(255), nullable=False)
+    summary = Column(Text, nullable=True)
+    mistakes = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    case = relationship("Case", backref="past_records")
+
+class CaseUserRequest(Base):
+    __tablename__ = "case_user_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.id", ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    request_text = Column(Text, nullable=False)
+    lawyer_reply = Column(Text, nullable=True)
+    status = Column(String(50), default="pending") # pending, addressed
+    created_at = Column(DateTime, default=datetime.utcnow)
+    case = relationship("Case", backref="user_requests")
+    user = relationship("User")

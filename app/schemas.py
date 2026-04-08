@@ -208,6 +208,72 @@ class CaseDocumentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+    class Config:
+        from_attributes = True
+
+class CaseTodoBase(BaseModel):
+    task: str
+    due_date: Optional[date] = None
+    status: str = "pending"
+
+class CaseTodoCreate(CaseTodoBase):
+    pass
+
+class CaseTodoResponse(CaseTodoBase):
+    id: int
+    case_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class CaseReminderBase(BaseModel):
+    title: str
+    content: Optional[str] = None
+    is_urgent: bool = False
+
+class CaseReminderCreate(CaseReminderBase):
+    pass
+
+class CaseReminderResponse(CaseReminderBase):
+    id: int
+    case_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class CasePastRecordBase(BaseModel):
+    title: str
+    summary: Optional[str] = None
+    mistakes: Optional[str] = None
+    notes: Optional[str] = None
+
+class CasePastRecordCreate(CasePastRecordBase):
+    pass
+
+class CasePastRecordResponse(CasePastRecordBase):
+    id: int
+    case_id: int
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class CaseUserRequestBase(BaseModel):
+    request_text: str
+
+class CaseUserRequestCreate(CaseUserRequestBase):
+    pass
+
+class CaseUserRequestResponse(BaseModel):
+    id: int
+    case_id: int
+    user_id: int
+    request_text: str
+    lawyer_reply: Optional[str] = None
+    status: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
 class CaseResponse(BaseModel):
     id: int
     consultation_id: int
@@ -216,6 +282,10 @@ class CaseResponse(BaseModel):
     created_at: datetime
     documents: List[CaseDocumentResponse] = []
     notes: List[CaseNoteResponse] = []
+    todos: List[CaseTodoResponse] = []
+    reminders: List[CaseReminderResponse] = []
+    past_records: List[CasePastRecordResponse] = []
+    user_requests: List[CaseUserRequestResponse] = []
     lawyer_name: Optional[str] = None
     client_name: Optional[str] = None
 

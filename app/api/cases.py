@@ -6,8 +6,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from ..database import get_db
-from ..models import Case, CaseDocument, CaseNote, Consultation, User, Lawyer
-from ..schemas import CaseResponse, CaseCreate, CaseDocumentResponse, CaseNoteResponse, CaseNoteCreate
+from ..models import Case, CaseDocument, CaseNote, Consultation, User, Lawyer, CaseTodo, CaseReminder, CasePastRecord, CaseUserRequest
+from ..schemas import (
+    CaseResponse, CaseCreate, CaseDocumentResponse, CaseNoteResponse, CaseNoteCreate,
+    CaseTodoCreate, CaseTodoResponse, CaseReminderCreate, CaseReminderResponse,
+    CasePastRecordCreate, CasePastRecordResponse, CaseUserRequestCreate, CaseUserRequestResponse
+)
 from ..core.security import get_current_user
 from .notifications import create_notification
 
@@ -159,4 +163,67 @@ def add_case_note(
 
     new_note.author_name = current_user.name
     return new_note
+
+# --- NEW SECTORS ---
+
+@router.post("/{case_id}/todo", response_model=CaseTodoResponse)
+def add_case_todo(case_id: int, todo: CaseTodoCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.user_type not in ["lawyer", "admin"]:
+        raise HTTPException(status_code=403, detail="Only lawyers can set tasks")
+    new_todo = CaseTodo(case_id=case_id, task=todo.task, due_date=todo.due_date, status="pending")
+    db.add(new_todo)
+    db.commit()
+    db.refresh(new_todo)
+    return new_todo
+
+@router.patch("/todo/{todo_id}", response_model=CaseTodoResponse)
+def update_todo_status(todo_id: int, status: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    todo = db.query(CaseTodo).filter(CaseTodo.id == todo_id).first()
+    if not todo:
+        raise HTTPException(status_code=404, detail="Task not found")
+    todo.status = status
+    db.commit()
+    db.refresh(todo)
+    return todo
+
+@router.post("/{case_id}/reminders", response_model=CaseReminderResponse)
+def add_case_reminder(case_id: int, reminder: CaseReminderCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    new_rem = CaseReminder(case_id=case_id, title=reminder.title, content=reminder.content, is_urgent=reminder.is_urgent)
+    db.add(new_rem)
+    db.commit()
+    db.refresh(new_rem)
+    return new_rem
+
+@router.post("/{case_id}/past-records", response_model=CasePastRecordResponse)
+def add_past_record(case_id: int, record: CasePastRecordCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    new_rec = CasePastRecord(
+        case_id=case_id, 
+        title=record.title, 
+        summary=record.summary, 
+        mistakes=record.mistakes, 
+        notes=record.notes
+    )
+    db.add(new_rec)
+    db.commit()
+    db.refresh(new_rec)
+    return new_rec
+
+@router.post("/{case_id}/user-requests", response_model=CaseUserRequestResponse)
+def add_user_request(case_id: int, req: CaseUserRequestCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    new_req = CaseUserRequest(case_id=case_id, user_id=current_user.id, request_text=req.request_text, status="pending")
+    db.add(new_req)
+    db.commit()
+    db.refresh(new_req)
+    return new_req
+
+@router.patch("/user-requests/{req_id}/reply", response_model=CaseUserRequestResponse)
+def reply_to_user_request(req_id: int, reply: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    request_obj = db.query(CaseUserRequest).filter(CaseUserRequest.id == req_id).first()
+    if not request_obj:
+        raise HTTPException(status_code=404, detail="Request not found")
+    request_obj.lawyer_reply = reply
+    request_obj.status = "addressed"
+    db.commit()
+    db.refresh(request_obj)
+    return request_obj
 
