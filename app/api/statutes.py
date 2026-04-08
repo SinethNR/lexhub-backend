@@ -8,6 +8,7 @@ from ..database import get_db
 from ..models import StatuteDocument, StatuteSection, User, UserType
 from ..schemas import StatuteResponse, StatuteSectionResponse
 from ..core.security import get_current_user
+from .chat import knowledge_manager
 
 router = APIRouter(prefix="/statutes", tags=["statutes"])
 
@@ -91,6 +92,9 @@ async def upload_statute(
     db.commit()
     db.refresh(db_statute)
 
+    # Refresh AI knowledge base
+    knowledge_manager.refresh()
+
     # Create response with uploader name
     response_data = db_statute.__dict__.copy()
     response_data["uploader_name"] = current_user.name
@@ -130,6 +134,10 @@ def delete_statute(
 
     db.delete(statute)
     db.commit()
+
+    # Refresh AI knowledge base
+    knowledge_manager.refresh()
+
     return {"message": "Statute deleted successfully"}
 
 @router.get("/my-uploads", response_model=List[StatuteResponse])

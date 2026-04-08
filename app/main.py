@@ -66,9 +66,17 @@ try:
 except Exception as e:
     print(f"WARNING: Static files mount failed (non-fatal): {e}")
 
+from .api.chat import knowledge_manager
+
 # ── 5. DB startup — non-fatal, app runs even if DB init fails ─
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Starting up LexHub API...")
+    # Refresh AI Knowledge Base on startup
+    try:
+        knowledge_manager.refresh()
+    except Exception as e:
+        logger.error(f"Failed to initialize AI Knowledge Base: {e}")
     try:
         from .database import engine, Base
         Base.metadata.create_all(bind=engine)
