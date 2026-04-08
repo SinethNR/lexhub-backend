@@ -72,9 +72,25 @@ async def startup_event():
     logger.info("Starting up LexHub API...")
     try:
         from .database import engine, Base
+        from sqlalchemy import text
         Base.metadata.create_all(bind=engine)
         print("DB tables verified.")
+        
+        # Self-healing migration for CaseDocument.category
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE case_documents ADD COLUMN category VARCHAR(50) DEFAULT NULL"))
+                conn.commit()
+                print("[Migration] Added 'category' column to case_documents.")
+            except Exception as e:
+                # Column might already exist
+                if "Duplicate column name" not in str(e):
+                    print(f"[Migration] Note: {e}")
+                else:
+                    print("[Migration] 'category' column already exists.")
+
     except Exception as e:
+        logger.error(f"Startup error: {e}")
         print(f"WARNING: DB startup check failed: {e}")
         print("App continues running. Tables likely already exist in Aiven.")
 

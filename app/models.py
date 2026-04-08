@@ -186,6 +186,7 @@ class CaseDocument(Base):
     file_url = Column(String(500), nullable=False)
     file_name = Column(String(255), nullable=False)
     file_type = Column(String(50), nullable=True) # PDF, Image, etc.
+    category = Column(String(50), nullable=True) # NIC, POL, etc.
     created_at = Column(DateTime, default=datetime.utcnow)
 
     case = relationship("Case", back_populates="documents")

@@ -1,7 +1,7 @@
 import os
 import shutil
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -91,6 +91,7 @@ def get_case_details(case_id: int, current_user: User = Depends(get_current_user
 async def upload_case_document(
     case_id: int,
     file: UploadFile = File(...),
+    category: Optional[str] = Form(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -114,10 +115,12 @@ async def upload_case_document(
         uploader_id=current_user.id,
         file_url=f"/static/cases/{safe_filename}",
         file_name=file.filename,
-        file_type=file_extension.upper().replace(".","")
+        file_type=file_extension.upper().replace(".",""),
+        category=category # Save the formal category!
     )
     db.add(new_doc)
     db.commit()
+    db.refresh(new_doc)
     return new_doc
 
 @router.post("/{case_id}/notes", response_model=CaseNoteResponse)

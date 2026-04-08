@@ -201,6 +201,7 @@ class CaseDocumentResponse(BaseModel):
     file_url: str
     file_name: str
     file_type: Optional[str] = None
+    category: Optional[str] = None
     created_at: datetime
     uploader_name: Optional[str] = None
 
