@@ -1,13 +1,5 @@
-from sqlalchemy import create_engine, text
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Use the same DB URL as the app
-SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root:root@localhost/lexhub"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+from sqlalchemy import text
+from app.database import engine
 
 def run_migrations():
     print("Running database migrations for profiles...")
