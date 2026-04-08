@@ -23,8 +23,8 @@ async def upload_statute(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Authorization check: only lawyers can upload
-    if current_user.user_type != UserType.lawyer:
+    # Authorization check: only lawyers and admins can upload
+    if current_user.user_type not in [UserType.lawyer, UserType.admin]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only lawyers can upload statutes")
 
     # File type check

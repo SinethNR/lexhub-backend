@@ -80,7 +80,7 @@ def update_consultation_status(consultation_id: int, status: str, current_user: 
     if not consultation:
         raise HTTPException(status_code=404, detail="Consultation not found")
 
-    if current_user.user_type == "lawyer":
+    if current_user.user_type in ["lawyer", "admin"]:
         lawyer_profile = db.query(Lawyer).filter(Lawyer.user_id == current_user.id).first()
         if not lawyer_profile or consultation.lawyer_id != lawyer_profile.id:
             raise HTTPException(status_code=403, detail="Not authorized to update this consultation")
@@ -93,8 +93,8 @@ def update_consultation_status(consultation_id: int, status: str, current_user: 
     db.commit()
     db.refresh(consultation)
 
-    # Notify user when lawyer accepts/rejects
-    if current_user.user_type == "lawyer" and status in ["confirmed", "cancelled"]:
+    # Notify user when lawyer/admin accepts/rejects
+    if current_user.user_type in ["lawyer", "admin"] and status in ["confirmed", "cancelled"]:
         msg = f"Your appointment on {consultation.consultation_date} has been {'confirmed' if status == 'confirmed' else 'cancelled'} by your lawyer."
         create_notification(
             db=db,

@@ -81,7 +81,7 @@ async def chat_with_ai(request: ChatRequest):
         pdf_context = extract_pdf_context()
         
         # Initialize model
-        model = genai.GenerativeModel('gemini-2.5-flash', system_instruction=SYSTEM_PROMPT)
+        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=SYSTEM_PROMPT)
         
         # Format history for Gemini
         # (Gemini 1.5 format is different but simple chat works well)

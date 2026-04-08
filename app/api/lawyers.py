@@ -17,7 +17,8 @@ PUB_UPLOAD_DIR = os.path.join("app", "static", "publications")
 
 @router.get("/", response_model=List[UserProfileResponse])
 def get_all_lawyers(db: Session = Depends(get_db)):
-    lawyers = db.query(User).filter(User.user_type == "lawyer").all()
+    # Return all users who have set up lawyer details, including Admins
+    lawyers = db.query(User).join(Lawyer, User.id == Lawyer.user_id).all()
     return lawyers
 
 @router.get("/{lawyer_id}", response_model=UserProfileResponse)
