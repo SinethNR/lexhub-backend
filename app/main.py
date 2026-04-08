@@ -3,8 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 # ── 1. Create App ────────────────────────────────────────────
 app = FastAPI(title="LexHub API", version="1.0.0")
+
+# Allow Render's hosts
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=["lexhub-backend.onrender.com", "localhost", "127.0.0.1", "*.onrender.com"]
+)
 
 # ── 2. CORS — ROBUST CONFIGURATION ──────────────────────────
 # We use environment variables for allowed origins, falling back to locals
